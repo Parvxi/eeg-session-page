@@ -1,62 +1,32 @@
 import 'dart:convert';
-
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:sukoon/Const/constant.dart';
 import 'package:sukoon/Pages/deviceInstr.dart';
 import 'package:sukoon/Pages/ffff.dart';
-import 'package:sukoon/Pages/mainDania.dart';
 import 'package:sukoon/widgets.dart';
 import 'package:get/get.dart';
-import 'dart:async';
-import 'package:http/http.dart' as http;
+
+import 'mainDania.dart';
 
 class EEG_Session extends StatefulWidget {
-  const EEG_Session({super.key});
+  const EEG_Session({Key? key}) : super(key: key);
 
   @override
   State<EEG_Session> createState() => _EEG_SessionState();
 }
-///////////////////////////////////////////////////////
 
 class _EEG_SessionState extends State<EEG_Session> {
+  
 
-  Future<void> fetchresult(String result) async {
-    final url = Uri.parse("http://10.0.2.2:8000/history/1/result");
-    final response = await http.put(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'result': result,
-      }),
-    );
-
-        if (response.statusCode == 200) {
-      // Data updated successfully
-      print('Data updated successfully');
-    } else {
-      // Error updating data
-      print('Failed to update data. Status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
-    }
-  }
-
-Future<String> getDataResult() async {
+Future<String> fetchDataFromServer() async {
   try {
     var response = await http.get(Uri.parse("http://10.0.2.2:8000/history/1/result"));
     if (response.statusCode == 200) {
-      var responseBody = jsonDecode(response.body) as List<dynamic>; 
-      if (responseBody.isNotEmpty) {
-        var firstItem = responseBody.first; 
-        if (firstItem is String) {
-          return firstItem;
-        } else {
-          throw Exception('Response body does not contain a string');
-        }
-      } else {
-        throw Exception('Response body is empty');
-      }
+      var responseBody = response.body;
+      print('Response body: $responseBody');
+      return responseBody;
     } else {
       throw Exception('Failed to fetch data. Status code: ${response.statusCode}');
     }
@@ -74,30 +44,33 @@ Future<String> getDataResult() async {
       children: [
         Container(
           height: 236,
-          decoration: const BoxDecoration(color: Color(darkBlue), boxShadow: [
-            BoxShadow(
-              color: Color(darkerGray),
-              blurRadius: 5,
-              spreadRadius: 2,
-              offset: Offset(0, 2),
-            )
-          ]),
+          decoration: const BoxDecoration(
+            color: Color(darkBlue),
+            boxShadow: [
+              BoxShadow(
+                color: Color(darkerGray),
+                blurRadius: 5,
+                spreadRadius: 2,
+                offset: Offset(0, 2),
+              )
+            ],
+          ),
           child: Column(
             children: [
-              SizedBox(
-                height: 70,
-              ),
+              SizedBox(height: 70),
               Row(
                 children: [
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => Settings()));
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Settings(),
+                        ),
+                      );
                     },
-                    child: const Padding(
-                      padding: EdgeInsets.all(15.0),
+                    child: Padding(
+                      padding: const EdgeInsets.all(15.0),
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: Icon(
@@ -108,9 +81,7 @@ Future<String> getDataResult() async {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    width: 20,
-                  ),
+                  SizedBox(width: 20),
                   Text(
                     "Emotion Recognition",
                     style: TextStyle(
@@ -126,9 +97,10 @@ Future<String> getDataResult() async {
                   Text(
                     "5 ",
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold),
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     "rounds",
@@ -137,15 +109,14 @@ Future<String> getDataResult() async {
                       fontSize: 24,
                     ),
                   ),
-                  SizedBox(
-                    width: 40,
-                  ),
+                  SizedBox(width: 40),
                   Text(
                     "10 ",
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold),
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     "min each",
@@ -161,80 +132,65 @@ Future<String> getDataResult() async {
         ),
         Column(
           children: [
-            const SizedBox(
-              height: 240,
-            ),
-            //Image(image: AssetImage("")),
-            const wideGrayBotton(
-                label: "Instrection Device", page: DeviceInstr()),
-            const SizedBox(
-              height: 15,
-            ),
-            const SizedBox(
-              height: 15,
-            ),
+            SizedBox(height: 240),
             wideGrayBotton(
-                label: "EEG Session",
-                weindow: () => _showModalBottomSheet(context)),
-            const SizedBox(
-              height: 15,
+              label: "Instrection Device",
+              page: DeviceInstr(),
             ),
+            SizedBox(height: 15),
+            wideGrayBotton(
+              label: "EEG Session",
+              weindow: () => _showModalBottomSheet(context),
+            ),
+            SizedBox(height: 15),
           ],
         ),
       ],
     );
   }
-}
 
-void _showDialog(
-  BuildContext context,
-) {
-  showDialog(
+  void _showDialog(BuildContext context) {
+    showDialog(
       context: context,
       builder: (BuildContext context) {
         return AdvancedCustomAlert();
-      });
-}
+      },
+    );
+  }
 
-
-void _showModalBottomSheet(BuildContext context) async {
-   var result = await getDataResult(); 
-  await showModalBottomSheet(
-    backgroundColor: Color(lightGray),
-    context: context,
-    builder: (BuildContext context) {
-      return SizedBox(
-        height: 500,
-        child: Column(
-          children: [
-            SizedBox(
-              height: 30,
-            ),
-
-            Timer1(),
-            //const wideBlueBotton( label: "Start",page: EEG_Session(),),
-            SizedBox(height: 10), // Add spacing between elements
-            // Add other elements as needed
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.receipt_long_outlined,
-                  color: Color(darkBlue),
-                  size: 50,
-                ),
-             Text(
-  "Result:  $result",
-  style: TextStyle(color: Color(darkBlue), fontSize: 30),
-)
-
-              ],
-            )
-          ],
-        ),
-      );
-    },
-  );
+  void _showModalBottomSheet(BuildContext context) async {
+    var result = await fetchDataFromServer();
+    await showModalBottomSheet(
+      backgroundColor: Color(lightGray),
+      context: context,
+      builder: (BuildContext context) {
+        return SizedBox(
+          height: 500,
+          child: Column(
+            children: [
+              SizedBox(height: 30),
+              Timer1(),
+              SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    color: Color(darkBlue),
+                    size: 50,
+                  ),
+                  Text(
+                    "Result:  $result",
+                    style: TextStyle(color: Color(darkBlue), fontSize: 30),
+                  ),
+                ],
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 class TimerController extends GetxController {
@@ -257,7 +213,7 @@ class TimerController extends GetxController {
     super.onClose();
   }
 
-  _startTimer(int seconds) {
+  void _startTimer(int seconds) {
     const duration = Duration(seconds: 1);
     remainingSeconds = seconds;
     _timer = Timer.periodic(duration, (timer) {
